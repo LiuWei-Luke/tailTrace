@@ -65,7 +65,7 @@ public class CheckSumService implements Runnable{
                             }
                         }
                     }
-                    LOGGER.info("getWrong:" + batchPos + ", traceIdsize:" + traceIdBatch.getTraceIdList().size() + ",result:" + map.size());
+//                    LOGGER.info("getWrong:" + batchPos + ", traceIdsize:" + traceIdBatch.getTraceIdList().size() + ",result:" + map.size());
                // }
 
                 for (Map.Entry<String, Set<String>> entry : map.entrySet()) {
@@ -128,12 +128,12 @@ public class CheckSumService implements Runnable{
             String result = JSON.toJSONString(TRACE_CHUCKSUM_MAP);
             RequestBody body = new FormBody.Builder()
                     .add("result", result).build();
-            String url = String.format("http://localhost:%s/api/finished", CommonController.getDataSourcePort());
+            String url = String.format("http://0.0.0.0:%s/api/finished", CommonController.getDataSourcePort());
             Request request = new Request.Builder().url(url).post(body).build();
             Response response = Utils.callHttp(request);
             if (response.isSuccessful()) {
                 response.close();
-                LOGGER.warn("suc to sendCheckSum, result:" + result);
+//                LOGGER.warn("suc to sendCheckSum, result:" + result);
                 return true;
             }
             LOGGER.warn("fail to sendCheckSum:" + response.message());

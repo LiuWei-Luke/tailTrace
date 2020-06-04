@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CommonController {
 
-  private static Integer DATA_SOURCE_PORT = 0;
+  private static Integer DATA_SOURCE_PORT = 8080;
 
   public static Integer getDataSourcePort() {
     return DATA_SOURCE_PORT;
