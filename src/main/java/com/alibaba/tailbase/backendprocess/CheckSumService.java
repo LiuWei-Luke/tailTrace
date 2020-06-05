@@ -46,13 +46,17 @@ public class CheckSumService implements Runnable{
                     }
                     continue;
                 }
-                Map<String, Set<String>> map = new HashMap<>();
+                Map<String, Set<String>> map = new ConcurrentHashMap<>();
                // if (traceIdBatch.getTraceIdList().size() > 0) {
                     int batchPos = traceIdBatch.getBatchPos();
                     // to get all spans from remote
                     for (String port : ports) {
+                        long time = System.currentTimeMillis();
+                        System.out.println("获取wrong trace batch: " + batchPos + ",开始时间: " + time);
                         Map<String, List<String>> processMap =
                                 getWrongTrace(JSON.toJSONString(traceIdBatch.getTraceIdList()), port, batchPos);
+                        time = System.currentTimeMillis();
+                        System.out.println("获取wrong trace batch: " + batchPos + ",结束时间: " + time);
                         if (processMap != null) {
                             for (Map.Entry<String, List<String>> entry : processMap.entrySet()) {
                                 String traceId = entry.getKey();
@@ -67,7 +71,9 @@ public class CheckSumService implements Runnable{
                     }
 //                    LOGGER.info("getWrong:" + batchPos + ", traceIdsize:" + traceIdBatch.getTraceIdList().size() + ",result:" + map.size());
                // }
-
+                long time;
+                time = System.currentTimeMillis();
+                System.out.println("排序wrong trace batch: " + batchPos + ",开始: " + time);
                 for (Map.Entry<String, Set<String>> entry : map.entrySet()) {
                     String traceId = entry.getKey();
                     Set<String> spanSet = entry.getValue();
@@ -79,6 +85,8 @@ public class CheckSumService implements Runnable{
                    // LOGGER.info("traceId:" + traceId + ",value:\n" + spans);
                     TRACE_CHUCKSUM_MAP.put(traceId, Utils.MD5(spans));
                 }
+                time = System.currentTimeMillis();
+                System.out.println("排序wrong trace batch: " + batchPos + ",开始: " + time);
             } catch (Exception e) {
                 // record batchPos when an exception  occurs.
                 int batchPos = 0;

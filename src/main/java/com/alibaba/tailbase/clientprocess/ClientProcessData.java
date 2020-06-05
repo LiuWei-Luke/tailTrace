@@ -31,7 +31,7 @@ public class ClientProcessData implements Runnable {
     // an list of trace map,like ring buffe.  key is traceId, value is spans ,  r
     private static List<Map<String,List<String>>> BATCH_TRACE_LIST = new ArrayList<>();
     // make 50 bucket to cache traceData
-    private static int BATCH_COUNT = 30;
+    private static int BATCH_COUNT = 15;
     public static  void init() {
         for (int i = 0; i < BATCH_COUNT; i++) {
             BATCH_TRACE_LIST.add(new ConcurrentHashMap<>(Constants.BATCH_SIZE));
@@ -50,7 +50,6 @@ public class ClientProcessData implements Runnable {
     @Override
     public void run() {
         LOGGER.info("CLIENT PROCESS START.");
-        synchronized (lock) {
             try {
                 String path = getPath();
                 // process data on client, not server
@@ -91,24 +90,29 @@ public class ClientProcessData implements Runnable {
                         }
                     }
                     if (count % Constants.BATCH_SIZE == 0) {
-                        inputPos++;
-                        // loop cycle
-                        if (inputPos >= BATCH_COUNT) {
-                            inputPos = 0;
+                        synchronized (lock) {
+                            inputPos++;
+                            // loop cycle
+                            if (inputPos >= BATCH_COUNT) {
+                                inputPos = 0;
+                            }
+                            traceMap = BATCH_TRACE_LIST.get(inputPos);
+                            // donot produce data, wait backend to consume data
+                            // TODO to use lock/notify
+                            if (traceMap.size() > 0) {
+                                // 使用lock / notice
+                                LOGGER.info("Child process is waiting.");
+                                lock.wait();
+                            }
+                            // batchPos begin from 0, so need to minus 1
+                            int batchPos = (int) count / Constants.BATCH_SIZE - 1;
+                            long time = System.currentTimeMillis();
+                            System.out.println("通知backend处理一个batch: " + batchPos + ",开始时间: " + time);
+                            updateWrongTraceId(badTraceIdList, batchPos);
+                            System.out.println("batch" + batchPos + "通知完成时间: " + time);
+                            badTraceIdList.clear();
+                            LOGGER.info("suc to updateBadTraceId, batchPos:" + batchPos);
                         }
-                        traceMap = BATCH_TRACE_LIST.get(inputPos);
-                        // donot produce data, wait backend to consume data
-                        // TODO to use lock/notify
-                        if (traceMap.size() > 0) {
-                            // 使用lock / notice
-                            LOGGER.info("Child process is waiting.");
-                            lock.wait();
-                        }
-                        // batchPos begin from 0, so need to minus 1
-                        int batchPos = (int) count / Constants.BATCH_SIZE - 1;
-                        updateWrongTraceId(badTraceIdList, batchPos);
-                        badTraceIdList.clear();
-                        LOGGER.info("suc to updateBadTraceId, batchPos:" + batchPos);
                     }
                 }
                 updateWrongTraceId(badTraceIdList, (int) (count / Constants.BATCH_SIZE - 1));
@@ -119,8 +123,6 @@ public class ClientProcessData implements Runnable {
                 LOGGER.warn("fail to process data", e);
             }
         }
-
-    }
 
     /**
      *  call backend controller to update wrong tradeId list.
@@ -156,10 +158,15 @@ public class ClientProcessData implements Runnable {
 
 
     public static String getWrongTracing(String wrongTraceIdList, int batchPos) {
+        long time = System.currentTimeMillis();
+        System.out.println("同步一个batch: " + batchPos + ",开始时间: " + time);
         synchronized (lock) {
             try {
 //                LOGGER.info(String.format("getWrongTracing, batchPos:%d, wrongTraceIdList:\n %s" ,
-//                        batchPos, wrongTraceIdList));
+//                        batchPos, wrongTraceIdList));        long time = System.currentTimeMillis();
+                time = System.currentTimeMillis();
+                System.out.println("同步一个batch: " + batchPos + ", 锁获取到时间: " + time);
+
                 List<String> traceIdList = JSON.parseObject(wrongTraceIdList, new TypeReference<List<String>>(){});
                 Map<String,List<String>> wrongTraceMap = new HashMap<>();
                 int pos = batchPos % BATCH_COUNT;
@@ -177,6 +184,7 @@ public class ClientProcessData implements Runnable {
                 // to clear spans, don't block client process thread. TODO to use lock/notify
                 BATCH_TRACE_LIST.get(previous).clear();
 
+                System.out.println("同步完一个batch: " + batchPos + ",结束时间: " + time);
                 // 释放锁
                 if (inputPos == previous) {
                     LOGGER.info("清理完缓存， 释放处理线程锁");
