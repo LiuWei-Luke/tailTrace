@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.util.concurrent.TimeUnit;
 
 public class Utils {
+    public static String port;
 
     private final static OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(50L,TimeUnit.SECONDS)
@@ -61,7 +62,8 @@ public class Utils {
     }
 
     public static boolean isClientProcess() {
-        String port = System.getProperty("server.port", "8080");
+//        String port = System.getProperty("server.port", "8080");
+        String port = Utils.port;
         if (Constants.CLIENT_PROCESS_PORT1.equals(port) ||
                 Constants.CLIENT_PROCESS_PORT2.equals(port)) {
             return true;
@@ -70,7 +72,8 @@ public class Utils {
     }
 
     public static boolean isBackendProcess() {
-        String port = System.getProperty("server.port", "8080");
+//        String port = System.getProperty("server.port", "8080");
+        String port = Utils.port;
         if (Constants.BACKEND_PROCESS_PORT1.equals(port)) {
             return true;
         }

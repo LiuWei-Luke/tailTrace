@@ -13,6 +13,8 @@ public class MultiEntry {
 
 
     public static void main(String[] args) {
+        String port = args[0];
+        Utils.port = port;
         if (Utils.isBackendProcess()) {
             BackendController.init();
             CheckSumService.start();
@@ -20,7 +22,7 @@ public class MultiEntry {
         if (Utils.isClientProcess()) {
             ClientProcessData.init();
         }
-        String port = System.getProperty("server.port", "8080");
+//        String port = System.getProperty("server.port", "8080");
         SpringApplication.run(MultiEntry.class,
                 "--server.port=" + port
         );

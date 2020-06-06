@@ -91,12 +91,22 @@ public class ClientProcessData implements Runnable {
                     }
                     if (count % Constants.BATCH_SIZE == 0) {
                         synchronized (lock) {
+                            // batchPos begin from 0, so need to minus 1
+                            int batchPos = (int) count / Constants.BATCH_SIZE - 1;
+                            long time = System.currentTimeMillis();
+                            System.out.println("通知backend处理一个batch: " + batchPos + ",开始时间: " + time);
+                            updateWrongTraceId(badTraceIdList, batchPos);
+                            time = System.currentTimeMillis();
+                            System.out.println("batch" + batchPos + "通知完成时间: " + time);
+                            badTraceIdList.clear();
+
                             inputPos++;
                             // loop cycle
                             if (inputPos >= BATCH_COUNT) {
                                 inputPos = 0;
                             }
                             traceMap = BATCH_TRACE_LIST.get(inputPos);
+                            LOGGER.info("suc to updateBadTraceId, batchPos:" + batchPos);
                             // donot produce data, wait backend to consume data
                             // TODO to use lock/notify
                             if (traceMap.size() > 0) {
@@ -104,14 +114,6 @@ public class ClientProcessData implements Runnable {
                                 LOGGER.info("Child process is waiting.");
                                 lock.wait();
                             }
-                            // batchPos begin from 0, so need to minus 1
-                            int batchPos = (int) count / Constants.BATCH_SIZE - 1;
-                            long time = System.currentTimeMillis();
-                            System.out.println("通知backend处理一个batch: " + batchPos + ",开始时间: " + time);
-                            updateWrongTraceId(badTraceIdList, batchPos);
-                            System.out.println("batch" + batchPos + "通知完成时间: " + time);
-                            badTraceIdList.clear();
-                            LOGGER.info("suc to updateBadTraceId, batchPos:" + batchPos);
                         }
                     }
                 }

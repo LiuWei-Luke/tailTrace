@@ -22,7 +22,8 @@ public class CommonController {
 
   @RequestMapping("/setParameter")
   public String setParamter(@RequestParam Integer port) {
-    DATA_SOURCE_PORT = port;
+//    DATA_SOURCE_PORT = port;
+    DATA_SOURCE_PORT = 9000;
     if (Utils.isClientProcess()) {
       ClientProcessData.start();
     }
