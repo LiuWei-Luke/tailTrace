@@ -1,3 +1,2 @@
-## 整体流程交互
-本demo主要是用于演示数据交互过程，性能很一般，仅供各选手参考
-![enter image description here](https://tianchi-public.oss-cn-hangzhou.aliyuncs.com/public/files/forum/158937741003137571589377409737.png)
+## 这是阿里性能大赛链路追踪的参赛项目
+项目主要针对DEMO进行修改，性能较差；主要是理解MAP-REDUCE这个过程，用于分布式应用
